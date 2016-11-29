@@ -1,7 +1,4 @@
 
-class Error(object):
-    def __init__(self, msg=""):
-        self.msg = "Error: " + str(msg)
-
-    def print_mess(self):
-        return self.msg
+class Error(Exception):
+    def __init__(self, msg, row, elem):
+        super(Exception, self).__init__('Error: index element - {0}, element - {1}. '.format(row, elem) + str(msg))

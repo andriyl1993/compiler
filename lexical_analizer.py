@@ -14,12 +14,6 @@ class LA(object):
         self.curr_index += 1
         return self.text[self.curr_index] if self.curr_index != self.length_file else None
 
-    def is_next_lexem_state(self):
-        if self.state == "S" or self.state == "OUT":
-            return True
-        else:
-            return False
-
     def _add_constant(self):
         consts = CONSTANTS.values()
         if len(consts):
@@ -30,78 +24,75 @@ class LA(object):
         CONSTANTS[self.curr_lexem] = str(next)
         return str(next)
 
-    def _get_code_lexem(self):
-        if (self.state == "IDN" or self.state == "WS" or self.state == "DEL") and self.curr_lexem in KEYWORDS:
+    def _get_code_lexem(self, state):
+        if (state == "IDN" or state == "WS" or state == "DEL") and self.curr_lexem in KEYWORDS:
             return KEYWORDS[self.curr_lexem]
-        if (self.state== "IDN") and self.curr_lexem in IDENTIFICATORS:
+        if (state== "IDN") and self.curr_lexem in IDENTIFICATORS:
             return IDENTIFICATORS[self.curr_lexem]
-        if (self.state == "IDN" or self.state == "NUM"):
+        if (state == "IDN" or state == "NUM"):
             if not self.curr_lexem in CONSTANTS:
                 return self._add_constant()
             else:
                 return CONSTANTS[self.curr_lexem]
-        if self.state == "DEL" and self.curr_lexem in DELIMITERS:
+        if state == "DEL" and self.curr_lexem in DELIMITERS:
             return DELIMITERS[self.curr_lexem]
-        return None
+        raise Error('Lexem is not find', self.curr_index, '')
 
     def run(self):
         ch = self._next()
-        while self.state != "EXIT":
+        lexem = ""
+        while True:
             if ch == None:
-                self.state = "EXIT"
-                break
+                return self.code_row
 
-            if ch.isalpha() and self.is_next_lexem_state():
-                self.state = "IDN"
-                while self.state != "OUT":
+            if ch.isalpha():
+                while True:
                     self.curr_lexem += ch
                     ch = self._next()
                     if not ch or not (ch.isalpha() or ch.isdigit()):
-                        code = self._get_code_lexem()
+                        code = self._get_code_lexem('IDN')
+                        lexem = self.curr_lexem
                         self.curr_lexem = ""
-                        self.state = "OUT"
-            elif ch.isdigit() and self.is_next_lexem_state():
-                self.state = "NUM"
-                while self.state != "OUT":
-                    self.curr_lexem += ch
-                    ch = self._next()
-                    if not ch or not ch.isdigit():
-                        code = self._get_code_lexem()
-                        self.curr_lexem = ""
-                        self.state = "OUT"
-            elif ch in DELIMITERS and self.is_next_lexem_state():
-                self.state = "DEL"
-                while self.state != "OUT":
-                    self.curr_lexem += ch
-                    ch = self._next()
-                    if not ch or not ch in DELIMITERS:
-                        code = self._get_code_lexem()
-                        self.curr_lexem = ""
-                        self.state = "OUT"
-            elif ch in WHITESPACES and self.is_next_lexem_state():
-                self.state = "WS"
-                while self.state != "OUT":
+                        break
+            elif ch.isdigit():
+                self.curr_lexem = ch
+                ch = self._next()
+                if ch.isdigit():
+                    raise Error('Only digits', self.curr_index, self.curr_lexem)
+                else:
+                    code = self._get_code_lexem('NUM')
+                    lexem = self.curr_lexem
+                    self.curr_lexem = ""
+            elif ch in DELIMITERS:
+                self.curr_lexem = ch
+                ch = self._next()
+                if ch in DELIMITERS:
+                    raise Error('Only delimiters with length 1', self.curr_index, self.curr_lexem)
+                else:
+                    code = self._get_code_lexem('DEL')
+                    lexem = self.curr_lexem
+                    self.curr_lexem = ""
+            elif ch in WHITESPACES:
+                while True:
                     ch = self._next()
                     if not ch or not ch in WHITESPACES:
                         code = None
-                        self.state = "OUT"
-            elif ch == '(' and self.is_next_lexem_state():
+                        break
+            elif ch == '(':
                 self.curr_lexem = ch
                 ch = self._next()
                 if ch == "*":
-                    self.state = "COM"
-                    while not self.state == "OUT":
+                    while True:
                         ch = self._next()
                         if ch == "*" and self._next() == ")":
                             ch = self._next()
-                            self.state = "OUT"
-                        elif ch == None:
-                            self.state = "ERROR"
                             break
-
-            if self.state == "ERROR":
-                error = Error('message Error')
-                return error.print_mess()
+                        elif ch == None:
+                            raise Error('Comment not closed', self.curr_index)
 
             if code:
-                self.code_row.append(code)
+                self.code_row.append({
+                    'lexem': lexem,
+                    'pos': self.curr_index,
+                    'code': code,
+                })
