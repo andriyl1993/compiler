@@ -24,6 +24,8 @@ DELIMITERS = {
     ':': ord(':'),
     ',': ord(','),
     '=': ord('='),
+    '(': ord('('),
+    ')': ord(')'),
 }
 
 WHITESPACES = {
