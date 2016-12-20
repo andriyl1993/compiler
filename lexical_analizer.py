@@ -1,4 +1,4 @@
-from tables import CONSTANTS, DELIMITERS, IDENTIFICATORS, KEYWORDS, WHITESPACES
+from tables import CONSTANTS, DELIMITERS, IDENTIFICATORS, KEYWORDS, WHITESPACES, SPECIFIC_SYMBOLS
 from error import Error
 
 class LA(object):
@@ -9,6 +9,9 @@ class LA(object):
         self.state = "S"
         self.length_file = len(text)
         self.code_row = []
+        self.current_x_pos = -1;
+        self.current_y_pos = 0;
+        self.open_bracket = False
 
     def _next(self):
         self.curr_index += 1
@@ -37,7 +40,7 @@ class LA(object):
                 return CONSTANTS[self.curr_lexem]
         if state == "DEL" and self.curr_lexem in DELIMITERS:
             return DELIMITERS[self.curr_lexem]
-        raise Error('Lexem is not find', self.curr_index, '')
+        return Error('Lexem is not find', self.curr_index, '')
 
     def _add_to_row(self, code, lexem):
         if code:
@@ -63,7 +66,7 @@ class LA(object):
         self.curr_lexem = ch
         ch = self._next()
         if ch.isdigit():
-            raise Error('Only digits', self.curr_index, self.curr_lexem)
+            return Error('Only digits', self.curr_index, self.curr_lexem)
         else:
             code = self._get_code_lexem('NUM')
             lexem = self.curr_lexem
@@ -73,9 +76,10 @@ class LA(object):
 
     def _delimiters(self, ch):
         self.curr_lexem = ch
+
         ch = self._next()
         if ch in DELIMITERS and ch != "*":
-            raise Error('Only delimiters with length 1', self.curr_index, self.curr_lexem)
+            return Error('Only delimiters with length 1', self.curr_index, self.curr_lexem)
         elif ch == "*":
             return self._comments(ch)
         else:
@@ -87,7 +91,12 @@ class LA(object):
 
     def _whitespaces(self, ch):
         while True:
+            if ch == '\n':
+                self.current_y_pos += 1
+                self.current_x_pos = -1
+
             ch = self._next()
+
             if not ch or not ch in WHITESPACES:
                 break
         return ch
@@ -104,15 +113,20 @@ class LA(object):
                     self.curr_lexem = ""
                     break
                 elif ch == None:
-                    raise Error('Comment not closed', self.curr_index)
+                    return Error('Comment not closed', self.curr_index)
         return ch
 
     def run(self):
         ch = self._next()
-        # lexem = ""
         while True:
+            self.current_x_pos += 1
             if ch == None:
+                if self.open_bracket:
+                    raise Error('Bracket doesn\'t close', self.curr_index)
                 return self.code_row
+
+            if isinstance(ch, Error):
+                return ch
 
             if ch.isalpha():
                 ch = self._identificators(ch)
@@ -122,5 +136,15 @@ class LA(object):
                 ch = self._delimiters(ch)
             elif ch in WHITESPACES:
                 ch = self._whitespaces(ch)
-            elif ch == '(':
-                ch = self._comments(ch)
+            elif ch in SPECIFIC_SYMBOLS:
+                if ch == "(":
+                    ch = self._next()
+                    if ch == "*":
+                        ch = self._comments(ch)
+                    else:
+                        self._add_to_row(SPECIFIC_SYMBOLS['('], '(')
+                elif ch == ")":
+                    self._add_to_row(SPECIFIC_SYMBOLS[')'], ch)
+                    ch = self._next();
+            else:
+                raise Error('Symbol doesn\'t allow')

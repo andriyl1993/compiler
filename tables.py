@@ -24,6 +24,9 @@ DELIMITERS = {
     ':': ord(':'),
     ',': ord(','),
     '=': ord('='),
+}
+
+SPECIFIC_SYMBOLS = {
     '(': ord('('),
     ')': ord(')'),
 }
