@@ -4,7 +4,7 @@ from lexical_analizer import LA
 from syntax_analizer import SA
 from error import Error
 
-data = file.read('program2.txt')
+data = file.read('program.txt')
 la = LA(data)
 res = la.run()
 if isinstance(res, Error):

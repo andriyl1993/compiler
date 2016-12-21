@@ -1,8 +1,3 @@
 PROGRAM test;
-    data INTEGER
-    data2 FLOAT
-    data45 INTEGER
 BEGIN
-    data = 1
-    data45 = 3
-END
+ENDs

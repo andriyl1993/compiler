@@ -148,9 +148,8 @@ class SA(object):
         print KEYWORDS
         print WHITESPACES
         print WHITESPACES
-        self._check_signal_program()
-        self.curr_code = self._next()
-        if self.curr_code == None:
-            return True
-        else:
-            raise Error('Error')
+        while True:
+            self._check_signal_program()
+            self.curr_code = self._next()
+            if self.curr_code == None:
+                return True
