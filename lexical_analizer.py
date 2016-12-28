@@ -9,13 +9,18 @@ class LA(object):
         self.state = "S"
         self.length_file = len(text)
         self.code_row = []
-        self.current_x_pos = -1;
-        self.current_y_pos = 0;
+        self.current_x_pos = 1;
+        self.current_y_pos = 1;
         self.open_bracket = False
 
     def _next(self):
         self.curr_index += 1
-        return self.text[self.curr_index] if self.curr_index != self.length_file else None
+        symb = self.text[self.curr_index] if self.curr_index < self.length_file else None
+        if symb != '\n':
+            self.current_x_pos += 1
+        else:
+            self.current_x_pos = 1
+        return symb
 
     def _add_constant(self):
         consts = CONSTANTS.values()
@@ -40,7 +45,7 @@ class LA(object):
                 return CONSTANTS[self.curr_lexem]
         if state == "DEL" and self.curr_lexem in DELIMITERS:
             return DELIMITERS[self.curr_lexem]
-        return Error('Lexem is not find', self.curr_index, '')
+        return Error('Lexem is not find', self.curr_index, self.curr_lexem)
 
     def _add_to_row(self, code, lexem):
         if code:
@@ -51,6 +56,7 @@ class LA(object):
             })
 
     def _identificators(self, ch):
+        self.curr_lexem = ""
         while True:
             self.curr_lexem += ch
             ch = self._next()
@@ -107,22 +113,47 @@ class LA(object):
             ch = self._next()
         if ch == "*":
             while True:
-                ch = self._next()
-                if ch == "*" and self._next() == ")":
+                if ch == "*":
                     ch = self._next()
-                    self.curr_lexem = ""
-                    break
+                    if ch == ")":
+                        ch = self._next()
+                        self.curr_lexem = ""
+                        break
                 elif ch == None:
-                    return Error('Comment not closed', self.curr_index)
+                    return Error('Comment not closed', self.curr_index, self.curr_lexem)
+                else:
+                    ch = self._next()
         return ch
+
+    def _phone(self):
+        phone_index = 0
+        self.curr_lexem = "+"
+        while True:
+            ch = self._next()
+            phone_index += 1
+            if phone_index == 6:
+                if ch == "-":
+                    self.curr_lexem += ch
+                else:
+                    return Error('Not defis', self.curr_index, self.curr_lexem)
+            elif ch.isdigit():
+                self.curr_lexem += ch
+            else:
+                break
+        if len(self.curr_lexem) != 14:
+            return Error('Phone error', self.curr_index, self.curr_lexem)
+        else:
+            code = self._get_code_lexem('NUM')
+            self._add_to_row(code, self.curr_lexem)
+            return ch
+
+
+
 
     def run(self):
         ch = self._next()
         while True:
-            self.current_x_pos += 1
             if ch == None:
-                if self.open_bracket:
-                    raise Error('Bracket doesn\'t close', self.curr_index)
                 return self.code_row
 
             if isinstance(ch, Error):
@@ -130,8 +161,8 @@ class LA(object):
 
             if ch.isalpha():
                 ch = self._identificators(ch)
-            elif ch.isdigit():
-                ch = self._numers(ch)
+            elif ch == "+":
+                ch = self._phone()
             elif ch in DELIMITERS:
                 ch = self._delimiters(ch)
             elif ch in WHITESPACES:
@@ -147,4 +178,4 @@ class LA(object):
                     self._add_to_row(SPECIFIC_SYMBOLS[')'], ch)
                     ch = self._next();
             else:
-                raise Error('Symbol doesn\'t allow')
+                return Error('Symbol doesn\'t allow', self.curr_index, self.curr_lexem)
