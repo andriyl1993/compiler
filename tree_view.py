@@ -2,9 +2,9 @@
 def show_tree(fn_name):
     def wrapper(fn):
         def wrapper_wrappper(self):
-            self.print_tree_elem(METHOD_NAMES[fn_name], add=True)
+            self.print_tree_elem(METHOD_NAMES[fn_name], fn_name, add=True)
             res = fn(self)
-            self.print_tree_elem(METHOD_NAMES[fn_name], add=False)
+            self.print_tree_elem(METHOD_NAMES[fn_name], fn_name, add=False)
             return res
         return wrapper_wrappper
     return wrapper

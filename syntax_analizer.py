@@ -9,6 +9,7 @@ class SA(object):
         self.curr_codes_elem = None
         self.curr_index = -1
         self.index = 1
+        self.errors = []
         return super(SA, self).__init__()
 
     def _next(self):
@@ -20,16 +21,16 @@ class SA(object):
         except:
             return None
 
-    def print_tree_elem(self, index, add=True):
+    def print_tree_elem(self, index, name, add=True):
         if add:
-            print "-" * self.index + " " + str(index)
+            print "-" * self.index + " " + name + ", " + str(index)
         self.index = self.index + 1 if add else self.index - 1
 
     @show_tree('signal_program')
     def _check_signal_program(self):
         if self._check_program():
             return True
-        raise Error('signal_program', None, None)
+        self.errors.append(Error('signal_program', None, None))
 
     @show_tree('program')
     def _check_program(self):

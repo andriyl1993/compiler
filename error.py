@@ -1,6 +1,6 @@
 
 class Error(Exception):
-    def __init__(self, msg, row=None, elem=None):
+    def __init__(self, msg, row=None, column=None, elem=None):
         self.error_message = 'Error: index element - {0}, element - {1}.'.format(row, elem) + str(msg)
         super(Exception, self).__init__('Error: index element - {0}, element - {1}. '.format(row, elem) + str(msg))
 

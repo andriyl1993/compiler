@@ -46,7 +46,8 @@ class LA(object):
         if code:
             self.code_row.append({
                 'lexem': lexem,
-                'pos': self.curr_index,
+                'pos_x': self.current_x_pos,
+                'pos_y': self.current_y_pos,
                 'code': code,
             })
 
