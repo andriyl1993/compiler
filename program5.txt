@@ -1,3 +1,4 @@
 PROCEDURE NAME (test1: INTEGER;)
 BEGIN
+Tes_example
 END.

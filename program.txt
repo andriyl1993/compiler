@@ -1,3 +1,3 @@
-PROGR AM test;
+PROGRAM test;
 BEGIN
-END.
+END
